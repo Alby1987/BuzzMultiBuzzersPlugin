@@ -212,7 +212,7 @@ Class USB_Buzzer
     Dim BuzzerNumber As Integer
 
     Public Sub New(BuzzerNum As Integer)
-        Speed = USB_SPEED_FULL
+        Speed = USB_SPEED_LOW
         BuzzerNumber = BuzzerNum
         BuzzerObject = Buzzers.getBuzzers()
         If BuzzerNumber = 0 Then
@@ -336,5 +336,9 @@ fail:
             ret = BuzzerObject.ReadBuzzer(data, BuzzerNumber)
         End If
         Return ret
+    End Function
+
+    Public Function getIrq() As Int32
+        Return BuzzerObject.getIrq(BuzzerNumber)
     End Function
 End Class

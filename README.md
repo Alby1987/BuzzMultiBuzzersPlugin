@@ -12,7 +12,7 @@ The plugin is configured to auto recognize two sets of buzzers. If you need to f
 Buzz! MultiBuzzers is the product of many people that helped with their open source projects. This is my way to thanks them.
 
 * USB_CLR, the base of this plugin, is a VB.NET project to interact with a keyboard
-	*https://github.com/TheLastRar/CLR-USB 
+	* https://github.com/TheLastRar/CLR-USB 
 	
 * luigi, who made the original plugin and its source available
 	* https://pcsx2.net/download/category/41-win-plugins.html

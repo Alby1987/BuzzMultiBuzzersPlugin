@@ -5,9 +5,9 @@ Imports PSE
 Class BMB_USB
 
 #If DEBUG Then
-    Private Const libraryName As String = "Buzz! MultiBuzzers Plugin (Alby87) DEBUG"
+    Private Const libraryName As String = "Buzz! MultiBuzzers Plugin DEBUG"
 #Else
-    Private Const libraryName As String = "Buzz! MultiBuzzers Plugin (Alby87)"
+    Private Const libraryName As String = "Buzz! MultiBuzzers Plugin"
 #End If
 
     Private Shared LogFolderPath As String = "logs"
@@ -171,7 +171,7 @@ Class BMB_USB
             '// Take care of anything else we need on opening, other then initialization.
 
             If (Not IsNothing(usb_device1)) Then
-                'usb_device1.open(hWnd)
+                usb_device1.open(hWnd)
             End If
             If (Not IsNothing(usb_device2)) Then
                 usb_device2.open(hWnd)
@@ -240,8 +240,28 @@ Class BMB_USB
         '// This is our USB irq handler, so if an interrupt gets triggered,
         '// deal with it here.
         Log_USB_Verb("USB:IRQ: irq Called")
-        Return 1
+        If GetIrq() > 0 Then
+            Return 1
+        End If
+        Return 0
     End Function
+
+    Public Shared Function GetIrq() As Int32
+        Dim irq As Int32 = 0
+        Dim pp As UInt32 = qemu_ohci.GetIrqAddr()
+        If Not IsNothing(usb_device1) Then
+            If CType(usb_device1, USB_Buzzer).getIrq > 0 Then
+                irq = 1
+            End If
+        End If
+        If Not IsNothing(usb_device2) Then
+            If CType(usb_device2, USB_Buzzer).getIrq > 0 Then
+                irq = 1
+            End If
+        End If
+        Return irq
+    End Function
+
     Public Shared Function USBirqHandler() As CLR_PSE_Callbacks.CLR_IRQHandler
         Try
             ' Pass our handler to pcsx2.

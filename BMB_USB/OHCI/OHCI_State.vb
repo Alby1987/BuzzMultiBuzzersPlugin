@@ -28,6 +28,7 @@ Namespace OHCI
         Dim per_cur As UInt32
         Dim done As UInt32
         Dim done_count As Integer
+        Dim last_cycle As Long
 
         '/* Frame counter partition */
 #Region "Frame Layout"
@@ -160,10 +161,13 @@ Namespace OHCI
             Dim bits As UInt32 = (intr_status And intr) And &H7FFFFFFFUI
             If (intr And OHCI_INTR_MIE) <> 0 AndAlso (bits <> 0) Then
                 If ((ctl And OHCI_CTL_HCFS) = OHCI_USB_OPERATIONAL) Then
-                    If FULL_DEBUG Then
-                        Log_Verb("usb-ohci: USBirq")
+                    If (intr_status <> OHCI_INTR_WD And get_clock() - last_cycle > 64) Then
+                        If FULL_DEBUG Then
+                            Log_Verb("usb-ohci: USBirq")
+                        End If
+                        USBirq(1)
+                        last_cycle = get_clock()
                     End If
-                    USBirq(1)
                 End If
             End If
             '}
@@ -1460,5 +1464,10 @@ exit_no_retire:
             CLR_PSE_PluginLog.WriteLine(TraceEventType.Verbose, (USBLogSources.OHCI), str)
         End Sub
 
+        Public Function GetIrqAddr() As UInt32
+            Dim ed As New ohci_ed
+            read_ed(Me.ctrl_head, ed)
+            Return (ed.head And OHCI_DPTR_MASK)
+        End Function
     End Class
 End Namespace
