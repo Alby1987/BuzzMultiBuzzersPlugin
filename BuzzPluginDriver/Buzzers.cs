@@ -12,8 +12,9 @@ namespace BuzzPluginDriver
         byte[][] buzzersBuffersOut = new byte[2][];
         HIDDevice[] buzzers = new HIDDevice[2];
         object[] locks = { new object(), new object() };
-        int[] toread = { 0, 0 };
         int[] irqread = { 0, 0 };
+        bool[] read = { false, false, false };
+        long lastIrq;
         //System.IO.StreamWriter file = new System.IO.StreamWriter(@"F:\logbuzz.txt");
 
         private volatile Queue[] readDataQueues = { Queue.Synchronized(new Queue()), Queue.Synchronized(new Queue()) };
@@ -84,8 +85,10 @@ namespace BuzzPluginDriver
         {
             lock (locks[buzzerNumber])
             {
+                read[buzzerNumber] = true;
                 data[0] = 0x7F;
                 data[1] = 0x7F;
+                data[5] = 0xFD;
                 if (irqstat[buzzerNumber] == IrqState.check) irqstat[buzzerNumber] = IrqState.on;
                 if ((buzzerNumber == 1 && buzzers[1] == null) ||
                    (buzzerNumber == 0 && buzzers[0] == null))
@@ -94,7 +97,6 @@ namespace BuzzPluginDriver
                     data[3] = 0x00;
                     data[4] = 0xF0;
                     //file.WriteLine(buzzerNumber + ";read failed;" + irqread[buzzerNumber] + ";" + toread[buzzerNumber] + ";0");
-                    toread[buzzerNumber] = 0;
                     return 16;
                 }
                 if (readDataQueues[buzzerNumber].Count < 1)
@@ -103,7 +105,6 @@ namespace BuzzPluginDriver
                     data[3] = buzzersBuffersLastIn[buzzerNumber][4];
                     data[4] = ((byte)(buzzersBuffersLastIn[buzzerNumber][5]|0xF0));
                     //file.WriteLine(buzzerNumber + ";last read;" + irqread[buzzerNumber] + ";" + toread[buzzerNumber] + ";0");
-                    toread[buzzerNumber] = 0;
                     return 16;
                 }
                 var actualmessage = (byte[])readDataQueues[buzzerNumber].Dequeue();
@@ -112,7 +113,6 @@ namespace BuzzPluginDriver
                 data[3] = actualmessage[4];
                 data[4] = (byte)(actualmessage[5]|0xF0);
                 //file.WriteLine(buzzerNumber + ";new read;" + irqread[buzzerNumber] + ";" + toread[buzzerNumber] + ";2");
-                toread[buzzerNumber] = 2;
                 return 16;
             }
         }
@@ -139,27 +139,24 @@ namespace BuzzPluginDriver
                 if (irqstat[buzzerNumber] == IrqState.check) return 1;
                 if (irqstat[buzzerNumber] == IrqState.on)
                 {
-                    if (toread[buzzerNumber] == 3)
+                    if (read[2] == true)
                     {
-                        toread[buzzerNumber] = 0;
-                        //file.WriteLine(buzzerNumber + ";request irq;" + irqread[buzzerNumber] + ";3;" + toread[buzzerNumber]);
-                        return 0;
-                    }
-                    if (toread[buzzerNumber] == 2)
-                    {
-                        toread[buzzerNumber] = 3;
-                        //file.WriteLine(buzzerNumber + ";request irq;" + irqread[buzzerNumber] + ";2;" + toread[buzzerNumber]);
+                        if (read[0] == true && read[1] == true)
+                        {
+                            read[2] = false;
+                            lastIrq = DateTime.Now.Ticks;
+                            //file.WriteLine(buzzerNumber + ";request irq;" + irqread[buzzerNumber] + ";2;" + toread[buzzerNumber]);
+                            return 1;
+                        }
                         return 1;
                     }
-                    if (toread[buzzerNumber] == 1)
+                    if (read[2] == false && irqread[buzzerNumber] > 0)
                     {
-                        //file.WriteLine(buzzerNumber + ";request irq;" + irqread[buzzerNumber] + ";1;" + toread[buzzerNumber]);
-                        return 1;
-                    }
-                    if (toread[buzzerNumber] == 0 && irqread[buzzerNumber] > 0)
-                    {
+                        read[0] = false;
+                        read[1] = false;
                         irqread[buzzerNumber] -= 1;
-                        toread[buzzerNumber] = 1;
+                        if (DateTime.Now.Ticks - lastIrq < 1000000) return 0;
+                        read[2] = true;
                         //file.WriteLine(buzzerNumber + ";request irq;" + irqread[buzzerNumber] + ";0;" + toread[buzzerNumber]);
                         return 1;
                     }
