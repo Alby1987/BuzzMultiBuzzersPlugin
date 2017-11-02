@@ -29,3 +29,4 @@ Buzz! MultiBuzzers is the product of many people that helped with their open sou
 * DllExport
 	* https://github.com/3F/DllExport
 
+* Ge-Force and jackun users on the PCSX2 forum for their help... thank you boys!

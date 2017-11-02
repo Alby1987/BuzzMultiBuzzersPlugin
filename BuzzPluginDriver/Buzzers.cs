@@ -154,8 +154,8 @@ namespace BuzzPluginDriver
                     {
                         read[0] = false;
                         read[1] = false;
-                        irqread[buzzerNumber] -= 1;
                         if (DateTime.Now.Ticks - lastIrq < 1000000) return 0;
+                        irqread[buzzerNumber] -= 1;
                         read[2] = true;
                         //file.WriteLine(buzzerNumber + ";request irq;" + irqread[buzzerNumber] + ";0;" + toread[buzzerNumber]);
                         return 1;
