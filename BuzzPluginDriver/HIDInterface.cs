@@ -227,6 +227,8 @@ namespace HIDInterface
         {
             interfaceDetails[] devices = new interfaceDetails[0];
 
+            Random random = new Random();
+
             //Create structs to hold interface information
             SP_DEVINFO_DATA devInfo = new SP_DEVINFO_DATA();
             SP_DEVICE_INTERFACE_DATA devIface = new SP_DEVICE_INTERFACE_DATA();
@@ -303,9 +305,17 @@ namespace HIDInterface
                 productInfo.IN_reportByteLength = (int)capabilities.InputReportByteLength;
                 productInfo.OUT_reportByteLength = (int)capabilities.OutputReportByteLength;
                 
-                if (stringIsInteger(SN))
-                    productInfo.serialNumber = Convert.ToInt32(SN);     //Check that serial number is actually a number
-                
+                try
+                {
+                    if (stringIsInteger(SN))
+                        productInfo.serialNumber = Convert.ToInt32(SN);     //Check that serial number is actually a number
+                }
+                catch (Exception)
+                {
+                    productInfo.serialNumber = random.Next(1, 1000);
+                }
+
+
                 int newSize = devices.Length + 1;
                 Array.Resize(ref devices, newSize);
                 devices[newSize - 1] = productInfo;
